@@ -1,0 +1,1238 @@
+    <!doctype html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Music Moments</title>
+    <style>
+        :root{
+        --bg:#000;
+        --fg:#fff;
+        --muted:rgba(255,255,255,.75);
+        --glass:rgba(0,0,0,.35);
+        --border:rgba(255,255,255,.25);
+        --accent:#00f2ea;
+        --danger:#d13438;
+        }
+        *{ box-sizing:border-box; }
+        html,body{ height:100%; }
+        body{
+        margin:0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background:var(--bg);
+        color:var(--fg);
+        overflow:hidden;
+        }
+
+        /* Top bar */
+        .topbar{
+        position:fixed;
+        top:0; left:0; right:0;
+        z-index:50;
+        padding: 14px 14px 10px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        pointer-events:none;
+        }
+        .topbar > *{ pointer-events:auto; }
+        .brand{
+        font-weight:800;
+        letter-spacing:.2px;
+        text-shadow: 0 2px 14px rgba(0,0,0,.65);
+        display:flex;
+        gap:10px;
+        align-items:center;
+        }
+        .dot{
+        width:10px;height:10px;border-radius:50%;
+        background: var(--accent);
+        box-shadow: 0 0 12px rgba(0,242,234,.7);
+        }
+        .btn{
+        border:1px solid var(--border);
+        background: var(--glass);
+        color:var(--fg);
+        padding:10px 12px;
+        border-radius:999px;
+        cursor:pointer;
+        backdrop-filter: blur(8px);
+        font-weight:700;
+        user-select:none;
+        white-space:nowrap;
+        }
+        .btn:hover{ background: rgba(0,0,0,.5); }
+        .btn:disabled{ opacity:.6; cursor:not-allowed; }
+
+        .nav{
+        display:flex; gap:10px;
+        align-items:center;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+        }
+        .seg{
+        display:flex;
+        border:1px solid rgba(255,255,255,.18);
+        background: rgba(0,0,0,.25);
+        border-radius:999px;
+        overflow:hidden;
+        backdrop-filter: blur(8px);
+        }
+        .seg button{
+        border:none;
+        background:transparent;
+        color:rgba(255,255,255,.85);
+        padding:10px 12px;
+        cursor:pointer;
+        font-weight:800;
+        }
+        .seg button.active{
+        background: rgba(255,255,255,.12);
+        color:#fff;
+        }
+
+        /* App root */
+        #app{ height:100vh; height:100dvh; }
+
+        /* Feed */
+        .feed{
+        height:100vh; height:100dvh;
+        overflow-y:auto;
+        scroll-snap-type: y mandatory;
+        -webkit-overflow-scrolling: touch;
+        }
+        .feed::-webkit-scrollbar{ width:0;height:0; }
+        .clip{
+        position:relative;
+        height:100vh; height:100dvh;
+        scroll-snap-align:start;
+        scroll-snap-stop: always;
+        background:#000;
+        display:grid;
+        place-items:center;
+        }.media{
+    width:100%;
+    height:100%;
+    object-fit:contain;         /* ✅ FITS whole video */
+    object-position:center;
+    background:#000;            /* letterboxing bars look clean */
+    display:block;
+    }.mediaImg{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    object-position:center;
+    background:#000;
+    display:block;
+    }
+
+    .mediaWrap{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#000;
+}
+
+.mediaVideo{
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  display:block;
+}
+
+.mediaImg{
+  width:100%;
+  height:100%;
+  object-fit:cover;     /* thumbnails look nice */
+  object-position:center;
+  display:block;
+}
+
+        .overlay{
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,0) 55%);
+        }
+        .meta{
+        position:absolute;
+        left:14px;
+        bottom:16px;
+        width: min(520px, calc(100% - 110px));
+        pointer-events:auto;
+        text-shadow: 0 2px 12px rgba(0,0,0,.7);
+        }
+        .title{
+        margin:0 0 6px;
+        font-size:18px;
+        font-weight:800;
+        }
+        .sub{
+        margin:0 0 10px;
+        font-size:13px;
+        color: var(--muted);
+        line-height:1.35;
+        }
+        .actions{
+        position:absolute;
+        right:14px;
+        bottom:120px;
+        display:flex;
+        flex-direction:column;
+        gap:10px;
+        pointer-events:auto;
+        }
+        .iconBtn{
+        width:52px; height:52px;
+        border-radius:999px;
+        border:1px solid var(--border);
+        background: var(--glass);
+        color:var(--fg);
+        cursor:pointer;
+        display:grid;
+        place-items:center;
+        backdrop-filter: blur(8px);
+        user-select:none;
+        }
+        .iconBtn.liked{ color: #ff4b4b; border-color: #ff4b4b; background: rgba(255, 75, 75, 0.15); }
+        .iconBtn:hover{ background: rgba(0,0,0,.55); }
+        .iconBtn small{
+        display:block;
+        margin-top:2px;
+        font-size:11px;
+        opacity:.85;
+        }
+        .hint{
+        position:absolute;
+        left:50%;
+        bottom:18px;
+        transform: translateX(-50%);
+        font-size:12px;
+        color: rgba(255,255,255,.75);
+        padding: 8px 10px;
+        border:1px solid rgba(255,255,255,.18);
+        background: rgba(0,0,0,.25);
+        border-radius:999px;
+        backdrop-filter: blur(8px);
+        pointer-events:none;
+        }
+
+        /* Upload modal */
+        .modalBackdrop{
+        position:fixed;
+        inset:0;
+        background: rgba(0,0,0,.55);
+        display:none;
+        align-items:flex-end;
+        justify-content:center;
+        z-index:100;
+        }
+        .modalBackdrop.show{ display:flex; }
+        .sheet{
+        width:min(720px, 100%);
+        background:#111;
+        border-top-left-radius:18px;
+        border-top-right-radius:18px;
+        padding:16px 16px 18px;
+        border:1px solid rgba(255,255,255,.12);
+        box-shadow: 0 -10px 40px rgba(0,0,0,.55);
+        }
+        .sheetHeader{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom:10px;
+        }
+        .sheetHeader h2{
+        margin:0;
+        font-size:16px;
+        font-weight:800;
+        }
+        .x{
+        border:none;
+        background: transparent;
+        color: rgba(255,255,255,.85);
+        font-size:22px;
+        cursor:pointer;
+        padding:4px 8px;
+        }
+        .grid{
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:12px;
+        }
+        .grid .full{ grid-column: span 2; }
+        label{ display:block; font-size:12px; color: rgba(255,255,255,.8); margin-bottom:6px; }
+        input[type="text"], input[type="file"]{
+        width:100%;
+        padding:10px;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,.16);
+        background: rgba(255,255,255,.06);
+        color: var(--fg);
+        outline:none;
+        }
+        input[type="file"]{ padding:8px; }
+        .primaryBtn{
+        width:100%;
+        padding:12px 14px;
+        border-radius:14px;
+        border:1px solid rgba(255,255,255,.18);
+        background: rgba(0,242,234,.15);
+        color: var(--fg);
+        font-weight:900;
+        cursor:pointer;
+        }
+        .primaryBtn:hover{ background: rgba(0,242,234,.22); }
+        .status{
+        margin-top:10px;
+        font-size:13px;
+        color: rgba(255,255,255,.85);
+        min-height: 18px;
+        }
+
+        /* Loading / empty */
+        .center{
+        height:100vh;
+        display:grid;
+        place-items:center;
+        padding:18px;
+        text-align:center;
+        color: rgba(255,255,255,.85);
+        }
+        .pill{
+        display:inline-flex;
+        gap:8px;
+        align-items:center;
+        padding:10px 12px;
+        border:1px solid rgba(255,255,255,.18);
+        border-radius:999px;
+        background: rgba(255,255,255,.06);
+        backdrop-filter: blur(8px);
+        }
+
+        /* Profile */
+        .profile{
+        height:100vh;
+        overflow-y:auto;
+        padding-top:64px;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        }
+        .profileInner{
+        width: min(980px, 100%);
+        margin: 0 auto;
+        padding: 0 12px;
+        }
+        .profileHeader{
+        padding: 6px 16px 14px;
+        border-bottom: 1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.35);
+        backdrop-filter: blur(10px);
+        border-radius: 14px;
+        }
+        .avatarRow{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:14px;
+        }
+        .avatar{
+        width:54px;height:54px;border-radius:999px;
+        display:grid;place-items:center;
+        border:1px solid rgba(255,255,255,.18);
+        background: rgba(255,255,255,.06);
+        font-weight:900;
+        }
+        .userBlock h2{
+        margin:0;
+        font-size:18px;
+        font-weight:900;
+        }
+        .userBlock p{
+        margin:4px 0 0;
+        color: rgba(255,255,255,.75);
+        font-size:13px;
+        }
+        .stats{
+        display:flex;
+        gap:18px;
+        margin-top:12px;
+        color: rgba(255,255,255,.85);
+        font-size:13px;
+        }
+        .stats b{ display:block; font-size:15px; }
+        .stats span{ color: rgba(255,255,255,.7); }
+
+        .gridClips{
+        display:grid;
+        gap: 2px;
+        padding: 10px 0 24px;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+        .tile{
+        position:relative;
+        aspect-ratio: 9 / 16;
+        background:#0b0b0b;
+        overflow:hidden;
+        border-radius:10px;
+        cursor:pointer;
+        border:none;
+        }
+        .tile img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
+        object-position:center;
+        display:block;
+        transform: scale(1.02);
+        }
+        .tile::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        background: linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,0) 55%);
+        pointer-events:none;
+        }
+        .tileBadge{
+        position:absolute;
+        right:6px;
+        top:6px;
+        padding:5px 7px;
+        border-radius:999px;
+        font-size:10px;
+        letter-spacing:.3px;
+        border:1px solid rgba(255,255,255,.14);
+        background: rgba(0,0,0,.35);
+        backdrop-filter: blur(8px);
+        z-index:2;
+        }
+        .tileTitle{
+        position:absolute;
+        left:8px;
+        bottom:8px;
+        right:8px;
+        font-size:12px;
+        color: rgba(255,255,255,.95);
+        text-shadow: 0 2px 12px rgba(0,0,0,.85);
+        overflow:hidden;
+        white-space:nowrap;
+        text-overflow:ellipsis;
+        z-index:2;
+        }
+
+        /* Login modal (center) */
+        .centerModal{
+        position:fixed;
+        inset:0;
+        display:none;
+        align-items:center;
+        justify-content:center;
+        z-index:200;
+        background: rgba(0,0,0,.65);
+        }
+        .centerModal.show{ display:flex; }
+        .card{
+        width:min(420px, 92vw);
+        background:#0f0f0f;
+        border:1px solid rgba(255,255,255,.12);
+        border-radius:18px;
+        padding:16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.6);
+        }
+        .card h2{
+        margin:0 0 6px;
+        font-size:16px;
+        font-weight:900;
+        }
+        .card p{
+        margin:0 0 12px;
+        color: rgba(255,255,255,.75);
+        font-size:13px;
+        line-height:1.35;
+        }
+        .row{
+        display:flex;
+        gap:10px;
+        align-items:center;
+        }
+        .row input[type="text"]{
+        flex:1;
+        }
+        .tiny{
+        font-size:12px;
+        color: rgba(255,255,255,.65);
+        margin-top:10px;
+        }
+
+        @media (max-width: 520px){
+        .gridClips{ grid-template-columns: repeat(3, 1fr); }
+        .profileHeader{ border-radius: 0; }
+        .profileInner{ padding: 0; }
+        }
+    </style>
+    </head>
+    <body>
+
+    <header class="topbar">
+        <div class="brand"><span class="dot"></span> Music Moments</div>
+
+        <div class="nav">
+        <div class="seg" role="tablist" aria-label="Navigation">
+            <button id="tabFeed" class="active" type="button">Feed</button>
+            <button id="tabProfile" type="button">Profile</button>
+        </div>
+        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn" id="openUploadBtn">＋ Add</button>
+        <button class="btn" id="logoutBtn" title="Switch user">Log out</button>
+        </div>
+    </header>
+
+    <main id="app"></main>
+
+    <!-- Login -->
+    <div class="centerModal" id="loginModal" aria-hidden="true">
+        <div class="card">
+        <h2>Log in / Sign up</h2>
+        <p>Enter a username. If it's new, we'll create an account for you automatically.</p>
+        <div class="row">
+            <input type="text" id="loginUser" placeholder="e.g. alex" autocomplete="username" />
+            <button class="primaryBtn" id="loginBtn" type="button" style="width:auto; padding:10px 14px; border-radius:999px;">Continue</button>
+        </div>
+        <div class="status" id="loginStatus"></div>
+        <div class="tiny">Tip: try multiple names (e.g. “alex”, “mia”) to simulate different users.</div>
+        </div>
+    </div>
+
+    <!-- Upload bottom sheet -->
+    <div class="modalBackdrop" id="modal">
+        <div class="sheet">
+        <div class="sheetHeader">
+            <h2>Add a clip</h2>
+            <button class="x" id="closeUploadBtn" aria-label="Close">×</button>
+        </div>
+
+        <form id="uploadForm">
+            <div class="grid">
+            <div class="full">
+                <label for="title">Title</label>
+                <input type="text" id="title" required placeholder="e.g. Late night vibe" />
+            </div>
+
+            <div class="full">
+                <label for="genre">Genre</label>
+                <input type="text" id="genre" placeholder="Pop, Rock, Lofi…" />
+            </div>
+
+            <div>
+                <label for="thumbFile">Thumbnail (optional)</label>
+                <input type="file" id="thumbFile" accept="image/*" />
+            </div>
+
+            <div>
+                <label for="videoFile">Video / Audio</label>
+                <input type="file" id="videoFile" accept="video/*,audio/*" required />
+            </div>
+
+            <div class="full">
+                <button class="primaryBtn" type="submit" id="uploadBtn">Upload</button>
+                <div class="status" id="uploadStatus"></div>
+            </div>
+            </div>
+        </form>
+        </div>
+    </div>
+
+    <script>
+    // ===== config =====
+    const API_BASE = "/api";
+    const LS_USER_KEY = "mm_userId";
+    let USER_ID = localStorage.getItem(LS_USER_KEY) || "";
+
+    const app = document.getElementById("app");
+    const modal = document.getElementById("modal");
+    const loginModal = document.getElementById("loginModal");
+
+    const placeholderPoster =
+        "data:image/svg+xml;utf8," +
+        encodeURIComponent(`
+        <svg xmlns='http://www.w3.org/2000/svg' width='800' height='1400'>
+            <defs>
+            <linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+                <stop offset='0' stop-color='#222'/>
+                <stop offset='1' stop-color='#000'/>
+            </linearGradient>
+            </defs>
+            <rect width='100%' height='100%' fill='url(#g)'/>
+            <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle'
+            font-family='Segoe UI, Arial' font-size='38' fill='#ffffff66'>
+            Music Moments
+            </text>
+        </svg>
+        `);
+
+    function escapeHtml(s){
+        return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+
+    function fileExtFromUrl(url){
+        const clean = String(url || "").split("?")[0];
+        const dot = clean.lastIndexOf(".");
+        return dot >= 0 ? clean.slice(dot+1).toLowerCase() : "";
+    }
+    const audioExts = ["mp3","wav","m4a","aac","ogg"];
+    const videoExts = ["mp4","webm","mov","m4v"];
+
+    function isProbablyVideo(file){
+        if(!file) return false;
+        if(file.type) return file.type.startsWith("video/");
+        const ext = (file.name.split(".").pop() || "").toLowerCase();
+        return videoExts.includes(ext);
+    }
+
+    function normalizeUserId(raw){
+        const s = String(raw || "").trim().toLowerCase();
+        return s.replace(/[^a-z0-9_-]/g, "").slice(0, 24);
+    }
+
+    async function generateVideoThumbnailFile(videoFile){
+        const url = URL.createObjectURL(videoFile);
+        let video;
+        try{
+        video = document.createElement("video");
+        video.src = url;
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = "metadata";
+
+        video.style.position = "fixed";
+        video.style.left = "-9999px";
+        video.style.top = "-9999px";
+        document.body.appendChild(video);
+
+        await new Promise((resolve, reject)=>{
+            video.addEventListener("loadedmetadata", resolve, { once:true });
+            video.addEventListener("error", () => reject(new Error("Video metadata load failed")), { once:true });
+        });
+
+        let t = (video.duration || 0) * 0.25;
+        if (!Number.isFinite(t) || t < 0.1) t = 0.1;
+
+        await new Promise((resolve, reject)=>{
+            video.addEventListener("seeked", resolve, { once:true });
+            video.addEventListener("error", () => reject(new Error("Video seek failed")), { once:true });
+            video.currentTime = t;
+        });
+
+        const w = video.videoWidth || 720;
+        const h = video.videoHeight || 1280;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, w, h);
+
+        const blob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.85));
+        if(!blob) throw new Error("Thumbnail generation failed (toBlob returned null)");
+
+        return new File([blob], "auto-thumb.jpg", { type: "image/jpeg" });
+        } finally {
+        URL.revokeObjectURL(url);
+        if(video) video.remove();
+        }
+    }
+
+    // ===== Backend login =====
+    async function loginToServer(username){
+        const res = await fetch(`${API_BASE}/users/login`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ username })
+        });
+
+        if(!res.ok){
+        if(res.status === 404) throw new Error("Login endpoint not found. Please restart the server.");
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.error || `Login failed (${res.status})`);
+        }
+        return res.json(); // { id, username, createdAt, lastLoginAt }
+    }
+
+    async function likeClip(id, ownerId){
+        const res = await fetch(`${API_BASE}/clips/${encodeURIComponent(id)}/like?userId=${encodeURIComponent(ownerId)}`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ userId: USER_ID })
+        });
+        if(!res.ok) throw new Error("Like failed");
+        return res.json(); // { likes: number, liked: boolean }
+    }
+
+    const viewedClips = new Set();
+    async function viewClip(id, ownerId){
+        if(viewedClips.has(id)) return;
+        viewedClips.add(id);
+        await fetch(`${API_BASE}/clips/${encodeURIComponent(id)}/view?userId=${encodeURIComponent(ownerId)}`, {
+        method: "POST"
+        }).catch(()=>{});
+    }
+
+    // ===== Data access =====
+    // Feed: tries /api/clips?all=true. If backend doesn't support it, falls back to current user's clips.
+    async function getClipsFeed(){
+        const res = await fetch(`${API_BASE}/clips?all=true`);
+        if(!res.ok){
+        return getClipsByUser(USER_ID);
+        }
+        const clips = await res.json();
+        return [...clips].sort((a,b)=> (Date.parse(b.createdAt||"")||0) - (Date.parse(a.createdAt||"")||0));
+    }
+
+    async function getClipsByUser(userId){
+        const res = await fetch(`${API_BASE}/clips?userId=${encodeURIComponent(userId)}`);
+        if(!res.ok){
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.error || `Failed to load clips (${res.status})`);
+        }
+        const clips = await res.json();
+        return [...clips].sort((a,b)=> (Date.parse(b.createdAt||"")||0) - (Date.parse(a.createdAt||"")||0));
+    }
+
+    async function getPlayUrls(id, userId){
+        const res = await fetch(`${API_BASE}/clips/${encodeURIComponent(id)}/playUrls?userId=${encodeURIComponent(userId)}`);
+        if(!res.ok) return null;
+        return res.json();
+    }
+
+    async function hydrateClips(clips){
+        return Promise.all(clips.map(async c=>{
+        if(c.videoUrl || c.thumbnailUrl) return c;
+        const urls = await getPlayUrls(c.id, c.userId || USER_ID);
+        return urls ? { ...c, videoUrl: urls.videoUrl, thumbnailUrl: urls.thumbnailUrl } : c;
+        }));
+    }
+
+    // ===== TikTok-like playback control =====
+    let activeIndex = 0;
+    const videoEls = new Map();
+    let muted = true;
+    let cleanupObserver = null;
+
+    function syncPlayback(){
+        for (const [idx, v] of videoEls.entries()){
+        v.muted = muted;
+        if (idx === activeIndex){
+            const p = v.play();
+            if (p && p.catch) p.catch(()=>{});
+            
+            // Trigger view count
+            const clipId = v.getAttribute("data-id");
+            const ownerId = v.getAttribute("data-owner");
+            if(clipId && ownerId) viewClip(clipId, ownerId);
+        } else {
+            v.pause();
+        }
+        }
+        document.querySelectorAll('[data-action="mute"]').forEach(btn=>{
+        btn.innerHTML = muted ? "🔇<small>Muted</small>" : "🔊<small>Sound</small>";
+        });
+    }
+
+    function observeActive(feedEl){
+        const items = Array.from(feedEl.querySelectorAll("[data-clip]"));
+        const io = new IntersectionObserver((entries)=>{
+        const vis = entries.filter(e=>e.isIntersecting);
+        if(!vis.length) return;
+        vis.sort((a,b)=> b.intersectionRatio - a.intersectionRatio);
+        const best = vis[0].target;
+        const idx = Number(best.getAttribute("data-index"));
+        if(!Number.isNaN(idx) && idx !== activeIndex){
+            activeIndex = idx;
+            syncPlayback();
+        }
+        }, { root: feedEl, threshold: [0.25,0.5,0.75,0.9] });
+
+        items.forEach(i=>io.observe(i));
+        return ()=>io.disconnect();
+    }
+
+    // ===== Views =====
+    let view = "feed";
+    let cachedFeedHydrated = [];
+    let cachedProfileHydrated = [];
+
+    function setView(next){
+        view = next;
+        document.getElementById("tabFeed").classList.toggle("active", view === "feed");
+        document.getElementById("tabProfile").classList.toggle("active", view === "profile");
+
+        if (cleanupObserver) { cleanupObserver(); cleanupObserver = null; }
+        videoEls.clear();
+        activeIndex = 0;
+
+        if (view === "feed") renderFeed({ keepCache: true });
+        else renderProfile();
+    }
+
+    function renderLoading(){
+        app.innerHTML = `
+        <div class="center">
+            <div class="pill">Loading…</div>
+        </div>
+        `;
+    }
+
+    function renderEmpty(msg){
+        app.innerHTML = `
+        <div class="center">
+            <div class="pill">${msg || "No clips yet. Tap <b>＋ Add</b> to upload."}</div>
+        </div>
+        `;
+    }
+
+    async function renderFeed({ startIndex = 0, keepCache = false } = {}){
+        renderLoading();
+
+        const clips = keepCache && cachedFeedHydrated.length
+        ? cachedFeedHydrated
+        : await hydrateClips(await getClipsFeed());
+
+        cachedFeedHydrated = clips;
+
+        if(!clips.length){ renderEmpty("No clips yet. Be the first to upload."); return; }
+
+        const feed = document.createElement("div");
+        feed.className = "feed";
+
+        clips.forEach((clip, idx)=>{
+        const mediaUrl = clip.videoUrl || "";
+        const ext = fileExtFromUrl(mediaUrl);
+        const isAudio = audioExts.includes(ext);
+        const isVideo = videoExts.includes(ext);
+
+        const poster = clip.thumbnailUrl || placeholderPoster;
+
+        const section = document.createElement("section");
+        section.className = "clip";
+        section.setAttribute("data-clip", "");
+        section.setAttribute("data-index", String(idx));
+
+       const mediaHtml = isVideo && mediaUrl
+  ? `<div class="mediaWrap">
+       <video class="mediaVideo" playsinline loop preload="metadata"
+              poster="${poster}" data-video></video>
+     </div>`
+  : `<div class="mediaWrap">
+       <img class="mediaImg" src="${poster}" alt="">
+     </div>`;
+        const owner = clip.userId || "unknown";
+        const likes = clip.likes || [];
+        const isLiked = likes.includes(USER_ID);
+        const likeCount = likes.length;
+        const viewCount = clip.views || 0;
+
+        section.innerHTML = `
+            ${mediaHtml}
+            <div class="overlay"></div>
+
+            <div class="meta">
+            <p class="title">${escapeHtml(clip.title || "Untitled")}</p>
+            <p class="sub">@${escapeHtml(owner)} • ${escapeHtml(clip.genre || "unknown")} • ${viewCount} views</p>
+            ${isAudio && mediaUrl ? `<audio controls preload="metadata" style="width:min(520px, 100%);" src="${mediaUrl}"></audio>` : ""}
+            </div>
+
+            <div class="actions">
+            <button class="iconBtn ${isLiked ? 'liked' : ''}" data-action="like" title="Like">
+                ${isLiked ? '❤️' : '🤍'}<small>${likeCount}</small>
+            </button>
+            <button class="iconBtn" data-action="mute" title="Mute / Unmute">🔇<small>Muted</small></button>
+            ${owner === USER_ID ? `<button class="iconBtn" data-action="delete" title="Delete">🗑️<small>Delete</small></button>` : ""}
+            </div>
+
+            <div class="hint">Scroll • Tap to pause/play</div>
+        `;
+
+        const v = section.querySelector("video[data-video]");
+        if (v && mediaUrl){
+            v.src = mediaUrl;
+            v.setAttribute("data-id", clip.id);
+            v.setAttribute("data-owner", owner);
+            videoEls.set(idx, v);
+        }
+
+        section.addEventListener("click", (e)=>{
+            const actionBtn = e.target.closest("[data-action]");
+            if(actionBtn) return;
+            const vid = section.querySelector("video[data-video]");
+            if(!vid) return;
+            if(vid.paused) vid.play().catch(()=>{});
+            else vid.pause();
+        });
+
+        section.querySelector('[data-action="like"]')?.addEventListener("click", async (e)=>{
+            const btn = e.currentTarget;
+            // Optimistic UI update
+            const wasLiked = btn.classList.contains("liked");
+            const countEl = btn.querySelector("small");
+            let count = parseInt(countEl.textContent) || 0;
+            
+            btn.classList.toggle("liked");
+            btn.innerHTML = `${!wasLiked ? '❤️' : '🤍'}<small>${wasLiked ? Math.max(0, count-1) : count+1}</small>`;
+
+            try {
+            const res = await likeClip(clip.id, owner);
+            btn.classList.toggle("liked", res.liked);
+            btn.innerHTML = `${res.liked ? '❤️' : '🤍'}<small>${res.likes}</small>`;
+            } catch(err) { console.error(err); }
+        });
+
+        section.querySelector('[data-action="mute"]')?.addEventListener("click", ()=>{
+            muted = !muted;
+            syncPlayback();
+        });
+
+        section.querySelector('[data-action="delete"]')?.addEventListener("click", async ()=>{
+            if(!confirm("Delete this clip?")) return;
+            await deleteClip(clip.id, clip.userId || USER_ID);
+            cachedFeedHydrated = [];
+            cachedProfileHydrated = [];
+            await renderFeed({ startIndex: Math.max(0, idx-1) });
+        });
+
+        feed.appendChild(section);
+        });
+
+        app.innerHTML = "";
+        app.appendChild(feed);
+
+        activeIndex = Math.max(0, Math.min(startIndex, clips.length - 1));
+        requestAnimationFrame(()=>{
+        const target = feed.querySelector(`[data-index="${activeIndex}"]`);
+        if (target) target.scrollIntoView({ block:"start" });
+        cleanupObserver = observeActive(feed);
+        syncPlayback();
+        });
+    }
+
+    async function renderProfile(){
+        renderLoading();
+
+        const clips = await hydrateClips(await getClipsByUser(USER_ID));
+        cachedProfileHydrated = clips;
+
+        const initials = USER_ID.split("-").map(p=>p[0]).join("").slice(0,2).toUpperCase();
+        const videoCount = clips.length;
+        const totalLikes = clips.reduce((acc, c) => acc + (c.likes ? c.likes.length : 0), 0);
+        const totalViews = clips.reduce((acc, c) => acc + (c.views || 0), 0);
+
+        app.innerHTML = `
+        <div class="profile">
+            <div class="profileInner">
+            <div class="profileHeader">
+                <div class="avatarRow">
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <div class="avatar">${escapeHtml(initials)}</div>
+                    <div class="userBlock">
+                    <h2>@${escapeHtml(USER_ID)}</h2>
+                    <p>Your clips & uploads</p>
+                    </div>
+                </div>
+                <button class="btn" id="profileAddBtn">＋ Add</button>
+                </div>
+
+                <div class="stats">
+                <div><b>${videoCount}</b><span>clips</span></div>
+                <div><b>${totalLikes}</b><span>likes</span></div>
+                <div><b>${totalViews}</b><span>views</span></div>
+                </div>
+            </div>
+
+            <div class="gridClips" id="gridClips"></div>
+            </div>
+        </div>
+        `;
+
+        document.getElementById("profileAddBtn").addEventListener("click", ()=>{
+        modal.classList.add("show");
+        });
+
+        const grid = document.getElementById("gridClips");
+
+        if(!clips.length){
+        grid.innerHTML = `
+            <div class="pill" style="grid-column: 1 / -1; margin: 12px auto;">
+            No clips yet. Tap <b>＋ Add</b> to upload.
+            </div>
+        `;
+        return;
+        }
+
+        clips.forEach((clip)=>{
+        const mediaUrl = clip.videoUrl || "";
+        const ext = fileExtFromUrl(mediaUrl);
+        const isAudio = audioExts.includes(ext);
+        const poster = clip.thumbnailUrl || placeholderPoster;
+
+        const chip = isAudio ? "♪" : "▶";
+
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.title = clip.title || "Untitled";
+
+        tile.innerHTML = `
+            <img src="${poster}" alt="" loading="lazy" decoding="async">
+            <div class="tileBadge">${chip}</div>
+            <div class="tileTitle">${escapeHtml(clip.title || "Untitled")}</div>
+        `;
+
+        tile.addEventListener("click", ()=>{
+            setView("feed");
+            renderFeed({ keepCache: false }).then(()=>{
+            const feedEl = document.querySelector(".feed");
+            if(!feedEl) return;
+            const idx = cachedFeedHydrated.findIndex(c => c.id === clip.id);
+            if(idx >= 0){
+                const target = feedEl.querySelector(`[data-index="${idx}"]`);
+                if(target) target.scrollIntoView({ block:"start" });
+            }
+            });
+        });
+
+        grid.appendChild(tile);
+        });
+    }
+
+    // ===== Upload flow =====
+    async function createClip({title, genre, thumbFile, mediaFile}){
+        const payload = {
+        userId: USER_ID,
+        title,
+        genre,
+        videoFileName: mediaFile.name,
+        thumbnailFileName: thumbFile ? thumbFile.name : undefined
+        };
+
+        const res = await fetch(`${API_BASE}/clips`, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+        });
+
+        if(!res.ok){
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.error || `Create failed (${res.status})`);
+        }
+        return res.json();
+    }
+
+    async function uploadBlob(sasUrl, file){
+        const res = await fetch(sasUrl, {
+        method:"PUT",
+        headers:{
+            "x-ms-blob-type":"BlockBlob",
+            "Content-Type": file.type || "application/octet-stream"
+        },
+        body: file
+        });
+
+        if(!res.ok){
+        const text = await res.text().catch(()=> "");
+        throw new Error(`Upload failed (${res.status}) ${text}`);
+        }
+    }
+
+    async function markReady(id){
+        await fetch(`${API_BASE}/clips/${encodeURIComponent(id)}?userId=${encodeURIComponent(USER_ID)}`, {
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ status:"ready" })
+        }).catch(()=>{});
+    }
+
+    async function deleteClip(id, ownerUserId){
+        const res = await fetch(`${API_BASE}/clips/${encodeURIComponent(id)}?userId=${encodeURIComponent(ownerUserId || USER_ID)}`, { method:"DELETE" });
+        if(!res.ok) throw new Error("Failed to delete");
+    }
+
+    // ===== UI events =====
+    document.getElementById("tabFeed").addEventListener("click", ()=> setView("feed"));
+    document.getElementById("tabProfile").addEventListener("click", ()=> setView("profile"));
+
+    document.getElementById("openUploadBtn").addEventListener("click", ()=>{
+        if(!USER_ID) return showLogin();
+        modal.classList.add("show");
+    });
+    document.getElementById("closeUploadBtn").addEventListener("click", ()=>{
+        modal.classList.remove("show");
+    });
+    modal.addEventListener("click", (e)=>{
+        if(e.target === modal) modal.classList.remove("show");
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", async ()=>{
+        if(!USER_ID) return showLogin();
+        cachedFeedHydrated = [];
+        cachedProfileHydrated = [];
+        if (view === "feed") await renderFeed();
+        else await renderProfile();
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", ()=>{
+        localStorage.removeItem(LS_USER_KEY);
+        USER_ID = "";
+        cachedFeedHydrated = [];
+        cachedProfileHydrated = [];
+        showLogin();
+    });
+
+    document.getElementById("uploadForm").addEventListener("submit", async (e)=>{
+        e.preventDefault();
+
+        const status = document.getElementById("uploadStatus");
+        const btn = document.getElementById("uploadBtn");
+
+        const title = document.getElementById("title").value.trim();
+        const genre = document.getElementById("genre").value.trim();
+        let thumbFile = document.getElementById("thumbFile").files[0];
+        const mediaFile = document.getElementById("videoFile").files[0];
+
+        if(!USER_ID){
+        status.textContent = "Please log in first.";
+        showLogin();
+        return;
+        }
+
+        if(!title || !mediaFile){
+        status.textContent = "Title and media file are required.";
+        return;
+        }
+
+        btn.disabled = true;
+
+        try{
+        if(!thumbFile && isProbablyVideo(mediaFile)){
+            status.textContent = "Generating thumbnail…";
+            try{
+            thumbFile = await generateVideoThumbnailFile(mediaFile);
+            } catch (err){
+            console.warn("Auto thumbnail failed, continuing without it:", err);
+            }
+        }
+
+        status.textContent = "Creating clip…";
+        const { clip, thumbnailUploadUrl, videoUploadUrl } =
+            await createClip({ title, genre, thumbFile, mediaFile });
+
+        status.textContent = "Uploading media…";
+        await uploadBlob(videoUploadUrl, mediaFile);
+
+        if(thumbFile && thumbnailUploadUrl){
+            status.textContent = "Uploading thumbnail…";
+            await uploadBlob(thumbnailUploadUrl, thumbFile);
+        }
+
+        status.textContent = "Finalizing…";
+        await markReady(clip.id);
+
+        status.textContent = "Uploaded ✅";
+        e.target.reset();
+        modal.classList.remove("show");
+
+        cachedFeedHydrated = [];
+        cachedProfileHydrated = [];
+        if (view === "feed") await renderFeed();
+        else await renderProfile();
+        } catch(err){
+        console.error(err);
+        status.textContent = "Error: " + (err.message || err);
+        } finally {
+        btn.disabled = false;
+        }
+    });
+
+    // ===== Login =====
+    function showLogin(){
+        loginModal.classList.add("show");
+        loginModal.setAttribute("aria-hidden","false");
+        document.getElementById("loginUser").value = "";
+        document.getElementById("loginStatus").textContent = "";
+        modal.classList.remove("show");
+        app.innerHTML = `
+        <div class="center">
+            <div class="pill">Please log in to continue.</div>
+        </div>
+        `;
+    }
+
+    function hideLogin(){
+        loginModal.classList.remove("show");
+        loginModal.setAttribute("aria-hidden","true");
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", async ()=>{
+        const input = document.getElementById("loginUser");
+        const status = document.getElementById("loginStatus");
+        const btn = document.getElementById("loginBtn");
+
+        const val = normalizeUserId(input.value);
+        if(!val){
+        status.textContent = "Enter a username (letters/numbers only).";
+        return;
+        }
+
+        btn.disabled = true;
+        status.textContent = "Signing in…";
+
+        try{
+        const user = await loginToServer(val);
+        USER_ID = user.id;
+
+        localStorage.setItem(LS_USER_KEY, USER_ID);
+
+        status.textContent = "Welcome ✅";
+        hideLogin();
+
+        cachedFeedHydrated = [];
+        cachedProfileHydrated = [];
+        setView("feed");
+        } catch (err){
+        console.error(err);
+        status.textContent = "Error: " + (err.message || err);
+        } finally {
+        btn.disabled = false;
+        }
+    });
+
+    document.getElementById("loginUser").addEventListener("keydown", (e)=>{
+        if(e.key === "Enter"){
+        e.preventDefault();
+        document.getElementById("loginBtn").click();
+        }
+    });
+
+    // ===== boot =====
+    (async function boot(){
+        if(!USER_ID) return showLogin();
+
+        try{
+        const user = await loginToServer(USER_ID);
+        USER_ID = user.id;
+        localStorage.setItem(LS_USER_KEY, USER_ID);
+        setView("feed");
+        } catch (e){
+        console.warn("Stored login invalid, forcing re-login:", e);
+        localStorage.removeItem(LS_USER_KEY);
+        USER_ID = "";
+        showLogin();
+        }
+    })();
+    </script>
+    </body>
+    </html>
